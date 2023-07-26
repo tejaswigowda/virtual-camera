@@ -48,6 +48,7 @@ function monkeyPatchMediaDevices() {
         );
         if (res) {
           const filter = new FilterStream(res, shader);
+          //alert(typeof filter.outputStream)
           return filter.outputStream;
         }
       }

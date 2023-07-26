@@ -1,4 +1,28 @@
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js"
+crossorigin="anonymous"></script>
+
 <script type="module">
+
+runningMode = "VIDEO";
+
+async function createImageSegmenter() {
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+  );
+
+  imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath:
+        "https://storage.googleapis.com/mediapipe-assets/deeplabv3.tflite?generation=1661875711618421",
+    },
+    outputCategoryMask: true,
+    outputConfidenceMasks: false
+    runningMode: runningMode
+  });
+}
+createImageSegmenter();
+
+
 
   import { monkeyPatchMediaDevices } from './js/media-devices.js';
 
