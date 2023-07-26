@@ -1,4 +1,32 @@
 import { ShaderRenderer } from './shader-renderer.js';
+//import {vision} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest';
+
+import {
+  FilesetResolver,
+  ImageSegmenter
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+
+
+var imageSegmenter;
+var runningMode = "VIDEO";
+
+async function createImageSegmenter() {
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+  );
+
+  imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath:
+        "https://storage.googleapis.com/mediapipe-assets/deeplabv3.tflite?generation=1661875711618421",
+    },
+    outputCategoryMask: true,
+    outputConfidenceMasks: false,
+    runningMode: runningMode
+  });
+}
+createImageSegmenter();
+
 
 class FilterStream {
   constructor(stream, shader) {
@@ -7,6 +35,7 @@ class FilterStream {
     const video = document.createElement("video");
     const canvas = document.createElement("canvas");
     this.canvas = canvas;
+    this.video = video;
     this.renderer = new ShaderRenderer(this.canvas, video, shader);
 
     video.addEventListener("playing", () => {
@@ -33,8 +62,20 @@ class FilterStream {
     // this.ctx.textBaseline = 'top';
     // this.ctx.fillText('Virtual', 10, 10)
 
-    // Use a WebGL renderer.
-    this.renderer.render();
+    
+
+    
+     this.renderer.render();
+     if(imageSegmenter){
+      let startTimeMs = performance.now();
+      imageSegmenter.segmentForVideo(this.video, startTimeMs, function(mask) {
+        console.log("mask", mask);
+        // Use a WebGL renderer to render the mask.
+        
+
+        //this.renderer.renderWithMask(mask);
+      });
+    }
     requestAnimationFrame(() => this.update());
   }
 }
