@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MediaPipe Selfie Segmentation Example</title>
+</head>
+<body>
+  <video id="video" width="640" height="480" autoplay></video>
+  <canvas id="canvas" width="640" height="480"></canvas>
+
+  <script type="module">
+    // Import the necessary modules from the MediaPipe CDN
+    import { SelfieSegmentation } from 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/dist/selfie_segmentation.esm.min.mjs';
+
+    // Get references to video and canvas elements
+    const videoElement = document.getElementById('video');
+    const canvasElement = document.getElementById('canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+
+    // Access the webcam stream and set it as the source for the video element
+    async function initCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+        videoElement.srcObject = stream;
+      } catch (error) {
+        console.error('Error accessing webcam:', error);
+      }
+    }
+
+    // Start selfie segmentation
+    async function startSelfieSegmentation() {
+      const selfieSegmentation = new SelfieSegmentation();
+      await selfieSegmentation.setOptions({ modelSelection: 1 }); // 0 for general, 1 for landscape portrait
+
+      // Process segmentation results
+      async function handleSegmentationResults(results) {
+        if (results.segmentationMask) {
+          const mask = new ImageData(results.segmentationMask, videoElement.videoWidth, videoElement.videoHeight);
+          canvasCtx.putImageData(mask, 0, 0);
+        }
+
+        requestAnimationFrame(detectSelfieSegmentation);
+      }
+
+      // Main function to detect selfie segmentation in the video stream
+      async function detectSelfieSegmentation() {
+        const videoWidth = videoElement.videoWidth;
+        const videoHeight = videoElement.videoHeight;
+        videoElement.width = videoWidth;
+        videoElement.height = videoHeight;
+
+        canvasElement.width = videoWidth;
+        canvasElement.height = videoHeight;
+
+        await selfieSegmentation.send({ image: videoElement });
+
+        // Get segmentation results
+        await selfieSegmentation.recv().then(handleSegmentationResults);
+      }
+
+      requestAnimationFrame(detectSelfieSegmentation);
+    }
+
+    // Start camera and selfie segmentation when the page loads
+    window.onload = async () => {
+      await initCamera();
+      startSelfieSegmentation();
+    };
+  </script>
+</body>
+</html>

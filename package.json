@@ -1,0 +1,14 @@
+{
+  "name": "virtual-camera",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@mediapipe/selfie_segmentation": "^0.1.1675465747"
+  }
+}

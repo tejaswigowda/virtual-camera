@@ -1,32 +1,25 @@
 import { ShaderRenderer } from './shader-renderer.js';
-//import {vision} from 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest';
 
-import {
-  FilesetResolver,
-  ImageSegmenter
-} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+  
+  // selfie segmentation from cdn @mediapipe
+import  * as SelfieSegmentation from './@mediapipe/selfie_segmentation_solution_wasm_bin';
 
+const selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
+  return `https://cdn.jsdelivr.net/npm/@mediapipe@0.1/selfie_segmentation/${file}`;
+}});
+selfieSegmentation.setOptions({
+modelSelection: 1,
+});
 
-var imageSegmenter;
-var runningMode = "VIDEO";
+var mask = null;
 
-async function createImageSegmenter() {
-  const vision = await FilesetResolver.forVisionTasks(
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-  );
+selfieSegmentation.onResults(function(results) {
+  if (results.segmentationMask != null) {
+    mask = results.segmentationMask;
+  }
+});
 
-  imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath:
-        "https://storage.googleapis.com/mediapipe-assets/deeplabv3.tflite?generation=1661875711618421",
-    },
-    outputCategoryMask: true,
-    outputConfidenceMasks: false,
-    runningMode: runningMode
-  });
-}
-createImageSegmenter();
-
+selfieSegmentation.send({image: videoElement});
 
 class FilterStream {
   constructor(stream, shader) {
@@ -66,15 +59,8 @@ class FilterStream {
 
     
      this.renderer.render();
-     if(imageSegmenter){
-      let startTimeMs = performance.now();
-      imageSegmenter.segmentForVideo(this.video, startTimeMs, function(mask) {
-        console.log("mask", mask);
-        // Use a WebGL renderer to render the mask.
-        
-
-        //this.renderer.renderWithMask(mask);
-      });
+     if(mask != null){
+      this.renderer.setUniform('mask', mask);
     }
     requestAnimationFrame(() => this.update());
   }
