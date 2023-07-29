@@ -50,6 +50,7 @@ createImageSegmenter();
 
 var maskCanvas = document.createElement('canvas');
 var maskCtx = maskCanvas.getContext('2d');
+var theCanvas;
 
 ShaderRenderer.prototype.setUniform = function (name, value) {
   const uniform = this.uniforms[name];
@@ -65,6 +66,7 @@ class FilterStream {
     const video = document.createElement("video");
     const canvas = document.createElement("canvas");
     this.canvas = canvas;
+    theCanvas = canvas;
     this.video = video;
     this.renderer = new ShaderRenderer(this.canvas, video, shader);
 
@@ -95,16 +97,16 @@ class FilterStream {
 
       let imageData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height).data;
       const mask = segmentation.categoryMask.getAsUint8Array();
-      console.log(mask);
+      //console.log(mask);
 
       for (let i in mask) {
-          // transparent pixel
-          //imageData[i * 4 + 3] = 0;
+        // transparent pixel
+        //imageData[i * 4 + 3] = 0;
 
-          //continue;
+        //continue;
 
         const legendColor = legendColors[mask[i] % legendColors.length];
-        if(mask[i] != 0) continue;
+        if (mask[i] != 0) continue;
         //imageData[i * 4] = legendColor[0]//(legendColor[0] + imageData[i * 4]) / 2;
         //imageData[i * 4 + 1] = legendColor[1]//(legendColor[1] + imageData[i * 4 + 1]) / 2;
         //imageData[i * 4 + 2] = legendColor[2]//(legendColor[2] + imageData[i * 4 + 2]) / 2;
@@ -113,14 +115,20 @@ class FilterStream {
       const uint8Array = new Uint8ClampedArray(imageData.buffer);
       const dataNew = new ImageData(uint8Array, maskCanvas.width, maskCanvas.height);
       maskCtx.putImageData(dataNew, 0, 0);
-      console.log(maskCanvas.toDataURL("image/png"));
+
+      //var maskCanvas.toDataURL("image/png"));
       localStorage.setItem("mask", maskCanvas.toDataURL("image/png"));
-     });
+    });
 
 
 
 
-    this.renderer.render();
+
+      this.renderer.render()
+    
+
+
+
     requestAnimationFrame(() => this.update());
   }
 }
