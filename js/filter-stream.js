@@ -114,10 +114,7 @@ class FilterStream {
       const dataNew = new ImageData(uint8Array, maskCanvas.width, maskCanvas.height);
       maskCtx.putImageData(dataNew, 0, 0);
       console.log(maskCanvas.toDataURL("image/png"));
-      //add image
-      if(this.gl){
-        this.gl.bindTexture(this.gl.TEXTURE_2D, maskCanvas);
-      }
+      localStorage.setItem("mask", maskCanvas.toDataURL("image/png"));
      });
 
 

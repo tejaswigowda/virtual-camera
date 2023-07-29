@@ -137,10 +137,22 @@ class ShaderRenderer {
     this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
 
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-    // add texture from maskCtx
-    //if(maskCanvas){
-    //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, maskCanvas);
-    //}
+
+
+    var overlayImage = localStorage.getItem('mask');
+    if(overlayImage){
+      // overlay image
+      var img = new Image();
+      img.onload = () => {
+        // add to canvas
+        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, img);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+      }
+      img.src = overlayImage;
+
+    }
+
+    
     
   }
 }
