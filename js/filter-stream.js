@@ -1,25 +1,62 @@
 import { ShaderRenderer } from './shader-renderer.js';
 
-  
-  // selfie segmentation from cdn @mediapipe
-import  * as SelfieSegmentation from './@mediapipe/selfie_segmentation_solution_wasm_bin';
 
-const selfieSegmentation = new SelfieSegmentation({locateFile: (file) => {
-  return `https://cdn.jsdelivr.net/npm/@mediapipe@0.1/selfie_segmentation/${file}`;
-}});
-selfieSegmentation.setOptions({
-modelSelection: 1,
-});
+
+
+
+const legendColors = [
+  [255, 197, 0, 255], // Vivid Yellow
+  [128, 62, 117, 255], // Strong Purple
+  [255, 104, 0, 255], // Vivid Orange
+  [166, 189, 215, 255] // Very Light Blue
+];
+
+
 
 var mask = null;
 
-selfieSegmentation.onResults(function(results) {
-  if (results.segmentationMask != null) {
-    mask = results.segmentationMask;
-  }
-});
 
-selfieSegmentation.send({image: videoElement});
+
+
+import {
+  FilesetResolver,
+  ImageSegmenter
+} from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0";
+
+var runningMode = "IMAGE";
+var imageSegmenter;
+
+async function createImageSegmenter() {
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+  );
+
+  imageSegmenter = await ImageSegmenter.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath:
+        "https://storage.googleapis.com/mediapipe-assets/deeplabv3.tflite?generation=1661875711618421",
+    },
+    outputCategoryMask: true,
+    outputConfidenceMasks: false,
+    runningMode: runningMode
+  });
+
+
+}
+createImageSegmenter();
+
+
+
+
+var maskCanvas = document.createElement('canvas');
+var maskCtx = maskCanvas.getContext('2d');
+
+ShaderRenderer.prototype.setUniform = function (name, value) {
+  const uniform = this.uniforms[name];
+  if (uniform) {
+    uniform.value = value;
+  }
+};
 
 class FilterStream {
   constructor(stream, shader) {
@@ -31,10 +68,13 @@ class FilterStream {
     this.video = video;
     this.renderer = new ShaderRenderer(this.canvas, video, shader);
 
+
+
     video.addEventListener("playing", () => {
       // Use a 2D Canvas.
-      // this.canvas.width = this.video.videoWidth;
-      // this.canvas.height = this.video.videoHeight;
+      maskCanvas.width = this.video.videoWidth;
+      maskCanvas.height = this.video.videoHeight;
+
 
       // Use a WebGL Renderer.
       this.renderer.setSize(this.video.videoWidth, this.video.videoHeight);
@@ -43,25 +83,47 @@ class FilterStream {
     video.srcObject = stream;
     video.autoplay = true;
     this.video = video;
-    //this.ctx = this.canvas.getContext('2d');
     this.outputStream = this.canvas.captureStream();
   }
 
   update() {
-    // Use a 2D Canvas
-    // this.ctx.filter = 'invert(1)';
-    // this.ctx.drawImage(this.video, 0, 0);
-    // this.ctx.fillStyle = '#ff00ff';
-    // this.ctx.textBaseline = 'top';
-    // this.ctx.fillText('Virtual', 10, 10)
 
-    
+    maskCtx.drawImage(this.video, 0, 0);
 
-    
-     this.renderer.render();
-     if(mask != null){
-      this.renderer.setUniform('mask', mask);
-    }
+    imageSegmenter.segment(maskCanvas, function (segmentation) {
+      //console.log(segmentation);
+
+      let imageData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height).data;
+      const mask = segmentation.categoryMask.getAsUint8Array();
+      console.log(mask);
+
+      for (let i in mask) {
+          // transparent pixel
+          //imageData[i * 4 + 3] = 0;
+
+          //continue;
+
+        const legendColor = legendColors[mask[i] % legendColors.length];
+        if(mask[i] != 0) continue;
+        //imageData[i * 4] = legendColor[0]//(legendColor[0] + imageData[i * 4]) / 2;
+        //imageData[i * 4 + 1] = legendColor[1]//(legendColor[1] + imageData[i * 4 + 1]) / 2;
+        //imageData[i * 4 + 2] = legendColor[2]//(legendColor[2] + imageData[i * 4 + 2]) / 2;
+        imageData[i * 4 + 3] = 0//legendColor[3]//(legendColor[3] + imageData[i * 4 + 3]) / 2;
+      }
+      const uint8Array = new Uint8ClampedArray(imageData.buffer);
+      const dataNew = new ImageData(uint8Array, maskCanvas.width, maskCanvas.height);
+      maskCtx.putImageData(dataNew, 0, 0);
+      console.log(maskCanvas.toDataURL("image/png"));
+      //add image
+      if(this.gl){
+        this.gl.bindTexture(this.gl.TEXTURE_2D, maskCanvas);
+      }
+     });
+
+
+
+
+    this.renderer.render();
     requestAnimationFrame(() => this.update());
   }
 }

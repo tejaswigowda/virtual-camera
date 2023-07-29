@@ -1,3 +1,6 @@
+
+
+
 const vs = `
   attribute vec4 a_position;
 
@@ -107,6 +110,9 @@ class ShaderRenderer {
     //this.gl.clearColor(255, 0, 255, 1);
     //this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
+
+
+
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
     this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.video);
@@ -131,6 +137,11 @@ class ShaderRenderer {
     this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
 
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+    // add texture from maskCtx
+    //if(maskCanvas){
+    //this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, maskCanvas);
+    //}
+    
   }
 }
 
