@@ -396,7 +396,7 @@ class ShaderRenderer {
 
 
   
-  render(image) {
+  async render(image) {
     //this.gl.clearColor(255, 0, 255, 1);
     //this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
@@ -414,26 +414,7 @@ class ShaderRenderer {
 
 
 
-    var overlayImage = localStorage.getItem('mask');
-    console.log(overlayImage);
-    if (overlayImage) {
-          var t = this;
-          var image = new Image();
-          image.onload = function () {
-            // Now that the image has loaded make copy it to the texture.
-            t.gl.bindTexture(t.gl.TEXTURE_2D, t.texture);
-            t.gl.texImage2D(t.gl.TEXTURE_2D, 0, t.gl.RGBA, t.gl.RGBA, t.gl.UNSIGNED_BYTE, image);
-            t.gl.texParameteri(t.gl.TEXTURE_2D, t.gl.TEXTURE_WRAP_S, t.gl.CLAMP_TO_EDGE);
-            t.gl.texParameteri(t.gl.TEXTURE_2D, t.gl.TEXTURE_WRAP_T, t.gl.CLAMP_TO_EDGE);
-            t.gl.texParameteri(t.gl.TEXTURE_2D, t.gl.TEXTURE_MIN_FILTER, t.gl.LINEAR);
 
-            t.gl.bindTexture(t.gl.TEXTURE_2D, null);
-
-
-          };
-          image.src = overlayImage;
-        
-    }
     
 
     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
@@ -451,7 +432,15 @@ class ShaderRenderer {
 
 
 
-
+    var overlayImage = localStorage.getItem('mask');
+    console.log(overlayImage);
+    if (overlayImage) {
+      const response = await fetch(overlayImage);
+      const imageBlob = await response.blob();
+      const imageBitmap = await createImageBitmap(imageBlob);
+      console.log(imageBitmap);
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, this.gl.RGB, this.gl.UNSIGNED_BYTE, imageBitmap);
+    }
 
     this.gl.enableVertexAttribArray(this.positionAttributeLocation);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
