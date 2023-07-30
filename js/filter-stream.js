@@ -90,6 +90,7 @@ class FilterStream {
 
   update() {
 
+  if(localStorage.getItem("doSegmentation")=== "true") {
     maskCtx.drawImage(this.video, 0, 0);
 
     imageSegmenter.segment(maskCanvas, function (segmentation) {
@@ -107,10 +108,10 @@ class FilterStream {
 
         const legendColor = legendColors[mask[i] % legendColors.length];
         if (mask[i] != 0) continue;
-        //imageData[i * 4] = legendColor[0]//(legendColor[0] + imageData[i * 4]) / 2;
-        //imageData[i * 4 + 1] = legendColor[1]//(legendColor[1] + imageData[i * 4 + 1]) / 2;
-        //imageData[i * 4 + 2] = legendColor[2]//(legendColor[2] + imageData[i * 4 + 2]) / 2;
-        imageData[i * 4 + 3] = 0//legendColor[3]//(legendColor[3] + imageData[i * 4 + 3]) / 2;
+        imageData[i * 4] = 255//legendColor[0]//(legendColor[0] + imageData[i * 4]) / 2;
+        imageData[i * 4 + 1] = 255//legendColor[1]//(legendColor[1] + imageData[i * 4 + 1]) / 2;
+        imageData[i * 4 + 2] = 255/legendColor[2]//(legendColor[2] + imageData[i * 4 + 2]) / 2;
+        imageData[i * 4 + 3] = 1//legendColor[3]//(legendColor[3] + imageData[i * 4 + 3]) / 2;
       }
       const uint8Array = new Uint8ClampedArray(imageData.buffer);
       const dataNew = new ImageData(uint8Array, maskCanvas.width, maskCanvas.height);
@@ -120,6 +121,8 @@ class FilterStream {
       localStorage.setItem("mask", maskCanvas.toDataURL("image/png"));
     });
 
+  }
+  
 
 
 

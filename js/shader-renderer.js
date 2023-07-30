@@ -172,12 +172,11 @@ precision highp float;
 
 uniform vec2 iResolution;
 uniform sampler2D iChannel0;
-uniform sampler2D iChannel1;
 uniform float iTime;
 
   void main() {
     vec2 uv = gl_FragCoord.xy / iResolution;
-    vec4 cam = texture2D(iChannel0, uv)+texture2D(iChannel1, uv);
+    vec4 cam = texture2D(iChannel0, uv);
     gl_FragColor = vec4(cam.r, uv, 1.);
   }
 `;
@@ -261,7 +260,6 @@ class ShaderRenderer {
     ]), this.gl.STATIC_DRAW);
     this.resolutionLocation = this.gl.getUniformLocation(this.program, "iResolution");
     this.cameraLocation = this.gl.getUniformLocation(this.program, 'iChannel0');
-    this.cameraLocation1 = this.gl.getUniformLocation(this.program, 'iChannel1');
     this.timeLocation = this.gl.getUniformLocation(this.program, "iTime");
   }
 
@@ -405,22 +403,16 @@ class ShaderRenderer {
 
 
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
-    this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+    this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false);
     this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, this.video);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-
-
-
-
-    
-
     this.gl.bindTexture(this.gl.TEXTURE_2D, null);
-
     this.gl.useProgram(this.program);
     this.gl.uniform2f(this.resolutionLocation, this.gl.canvas.width, this.gl.canvas.height);
+
     if (this.timeLocation) {
       this.gl.uniform1f(this.timeLocation, .001 * performance.now());
     }
@@ -428,10 +420,12 @@ class ShaderRenderer {
     this.gl.activeTexture(this.gl.TEXTURE0);
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
     this.gl.uniform1i(this.cameraLocation, 0);
-    this.gl.uniform1i(this.cameraLocation1, 0);
+    this.gl.enableVertexAttribArray(this.positionAttributeLocation);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+    this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
 
 
-
+    if(localStorage.getItem('doSegmentation') === 'true') {
     var overlayImage = localStorage.getItem('mask');
     console.log(overlayImage);
     if (overlayImage) {
@@ -439,15 +433,11 @@ class ShaderRenderer {
       const imageBlob = await response.blob();
       const imageBitmap = await createImageBitmap(imageBlob);
       console.log(imageBitmap);
-      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGB, this.gl.RGB, this.gl.UNSIGNED_BYTE, imageBitmap);
+      this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, imageBitmap);
+    }
     }
 
-    this.gl.enableVertexAttribArray(this.positionAttributeLocation);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-    this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
-
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-
 
 
 
