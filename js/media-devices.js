@@ -3,7 +3,7 @@ localStorage.setItem('doSegmentation', "false");
 import { FilterStream } from './filter-stream.js';
 
 // Ideally we'd use an editor or import shaders directly from the API.
-import { testFilter as shader } from './shaders/test-filter2.js';
+import { testFilter as shader } from './shaders/test-filter3.js';
 //import { distortedTV as shader } from './distorted-tv.js';
 //import { moneyFilter as shader } from './money-filter.js';
 
