@@ -105,8 +105,8 @@ class ShaderRenderer {
   }
 
  async render() {
-    //this.gl.clearColor(255, 0, 255, 1);
-    //this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    this.gl.clearColor(255, 0, 255, 1);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 
     this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
     this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
