@@ -49,7 +49,10 @@ createImageSegmenter();
 
 
 var maskCanvas = document.createElement('canvas');
+window.maskCanvas = maskCanvas;
 var maskCtx = maskCanvas.getContext('2d');
+window.maskCtx = maskCtx;
+
 var theCanvas;
 
 ShaderRenderer.prototype.setUniform = function (name, value) {
@@ -118,7 +121,7 @@ class FilterStream {
       maskCtx.putImageData(dataNew, 0, 0);
 
       //var maskCanvas.toDataURL("image/png"));
-      localStorage.setItem("mask", maskCanvas.toDataURL("image/png"));
+      //localStorage.setItem("mask", maskCanvas.toDataURL("image/png"));
     });
 
   }

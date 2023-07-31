@@ -131,13 +131,10 @@ class ShaderRenderer {
     this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
 
     if(localStorage.getItem('doSegmentation') === 'true') {
-      var overlayImage = localStorage.getItem('mask');
-      console.log(overlayImage);
+      //console.log(window.maskCanvas.toDataURL("image/png"));
+              var overlayImage = window.maskCtx.getImageData(0, 0, window.maskCanvas.width, window.maskCanvas.height);
        if (overlayImage) {
-        const response = await fetch(overlayImage);
-        const imageBlob = await response.blob();
-        const imageBitmap = await createImageBitmap(imageBlob);
-        console.log(imageBitmap);
+        const imageBitmap = await createImageBitmap(overlayImage);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, imageBitmap);
        }
       }
