@@ -50,6 +50,7 @@ class ShaderRenderer {
     this.program = this.createProgram(vs, wrapShaderToy(shader));
 
     this.texture = this.gl.createTexture();
+    this.selfieTexture = this.gl.createTexture();
 
     this.positionAttributeLocation = this.gl.getAttribLocation(this.program, "a_position");
     this.positionBuffer = this.gl.createBuffer();
@@ -114,7 +115,7 @@ class ShaderRenderer {
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-    //this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 
     this.gl.useProgram(this.program);
     this.gl.uniform2f(this.resolutionLocation, this.gl.canvas.width, this.gl.canvas.height);
@@ -130,17 +131,29 @@ class ShaderRenderer {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-    if(localStorage.getItem('doSegmentation') === 'true') {
-      //console.log(window.maskCanvas.toDataURL("image/png"));
-              var overlayImage = window.maskCtx.getImageData(0, 0, window.maskCanvas.width, window.maskCanvas.height);
+    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+
+
+     if(localStorage.getItem('doSegmentation') === 'true') {
+
+      console.log(window.maskCanvas.toDataURL("image/png"));
+      var overlayImage = window.maskCtx.getImageData(0, 0, window.maskCanvas.width, window.maskCanvas.height);
        if (overlayImage) {
         const imageBitmap = await createImageBitmap(overlayImage);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.selfieTexture);
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, imageBitmap);
+
+
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
        }
       }
 
       
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+
+
+      
   }
 }
 
