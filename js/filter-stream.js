@@ -93,7 +93,7 @@ class FilterStream {
 
   update() {
 
-  if(localStorage.getItem("doSegmentation")=== "true") {
+  if(window.doSegmentation) {
     maskCtx.drawImage(this.video, 0, 0);
 
     imageSegmenter.segment(maskCanvas, function (segmentation) {

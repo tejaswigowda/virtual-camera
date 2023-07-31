@@ -134,7 +134,7 @@ class ShaderRenderer {
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 
 
-     if(localStorage.getItem('doSegmentation') === 'true') {
+     if(window.doSegmentation) {
 
       // stop using shader
       this.gl.useProgram(null);
@@ -165,10 +165,6 @@ class ShaderRenderer {
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
        }
       }
-
-      
-
-
       
   }
 }

@@ -1,4 +1,4 @@
-localStorage.setItem('doSegmentation', "false");
+window.doSegmentation = false;
 
 import { FilterStream } from './filter-stream.js';
 
