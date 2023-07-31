@@ -136,11 +136,13 @@ class ShaderRenderer {
 
      if(localStorage.getItem('doSegmentation') === 'true') {
 
+      // stop using shader
+      this.gl.useProgram(null);
+
       console.log(window.maskCanvas.toDataURL("image/png"));
       var overlayImage = window.maskCtx.getImageData(0, 0, window.maskCanvas.width, window.maskCanvas.height);
        if (overlayImage) {
         const imageBitmap = await createImageBitmap(overlayImage);
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 
 
         this.gl.bindTexture(this.gl.TEXTURE_2D, this.selfieTexture);
@@ -150,10 +152,15 @@ class ShaderRenderer {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
-        this.gl.activeTexture(this.gl.TEXTURE1);
+
+
         this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, imageBitmap);
 
-        this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+
+
+    this.gl.enableVertexAttribArray(this.positionAttributeLocation);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+    this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
 
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
        }
