@@ -1,3 +1,10 @@
+function loadImage(url, callback) {
+  var image = new Image();
+  image.src = url;
+  image.onload = callback;
+  return image;
+}
+
 const vs = `
   attribute vec4 a_position;
 
@@ -11,12 +18,15 @@ precision highp float;
 
 uniform vec2 iResolution;
 uniform sampler2D iChannel0;
+uniform sampler2D u_image0;
+varying vec2 v_texCoord;
 uniform float iTime;
 
   void main() {
     vec2 uv = gl_FragCoord.xy / iResolution;
     vec4 cam = texture2D(iChannel0, uv);
-    gl_FragColor = vec4(cam.r, uv, 1.);
+    vec4 color0 = texture2D(u_image0, v_texCoord);
+    gl_FragColor = vec4(cam.r, uv, 1.) * color0;
   }
 `;
 
@@ -39,15 +49,40 @@ void main() {
 `;
 }
 
+
+
+    // create selfie shaders
+    var vertexShaderSrc = 
+    "attribute vec2 aVertex;" +
+    "attribute vec2 aUV;" + 
+    "varying vec2 vTex;" +
+    "uniform vec2 pos;" +
+    "void main(void) {" +
+    "  gl_Position = vec4(aVertex + pos, 0.0, 1.0);" +
+    "  vTex = aUV;" +
+    "}";
+
+    var fragmentShaderSrc =
+    "precision highp float;" +
+    "varying vec2 vTex;" +
+    "uniform sampler2D sampler0;" +
+    "void main(void){" +
+    "  gl_FragColor = texture2D(sampler0, vTex);"+
+    "}";
+
 class ShaderRenderer {
   constructor(canvas, video, shader) {
     this.canvas = canvas;
     this.video = video;
 
     this.gl = this.canvas.getContext("webgl");
+    window.gl = this.gl;
     //this.gl.getExtension('EXT_shader_texture_lod');
 
     this.program = this.createProgram(vs, wrapShaderToy(shader));
+
+
+
 
     this.texture = this.gl.createTexture();
     this.selfieTexture = this.gl.createTexture();
@@ -65,7 +100,10 @@ class ShaderRenderer {
     ]), this.gl.STATIC_DRAW);
     this.resolutionLocation = this.gl.getUniformLocation(this.program, "iResolution");
     this.cameraLocation = this.gl.getUniformLocation(this.program, 'iChannel0');
+    this.selfieLocation = this.gl.getUniformLocation(this.program, 'u_image0');
+    this.v_texCoord = this.gl.getUniformLocation(this.program, 'v_texCoord');
     this.timeLocation = this.gl.getUniformLocation(this.program, "iTime");
+
   }
 
   createShader(sourceCode, type) {
@@ -115,7 +153,7 @@ class ShaderRenderer {
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
     this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-    this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+    //this.gl.bindTexture(this.gl.TEXTURE_2D, null);
 
     this.gl.useProgram(this.program);
     this.gl.uniform2f(this.resolutionLocation, this.gl.canvas.width, this.gl.canvas.height);
@@ -123,49 +161,32 @@ class ShaderRenderer {
       this.gl.uniform1f(this.timeLocation, .001 * performance.now());
     }
 
-    this.gl.activeTexture(this.gl.TEXTURE0);
-    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
     this.gl.uniform1i(this.cameraLocation, 0);
 
-    this.gl.enableVertexAttribArray(this.positionAttributeLocation);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
-    this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
-
-    this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
 
 
-     if(window.doSegmentation) {
-
-      // stop using shader
-      this.gl.useProgram(null);
-
-      console.log(window.maskCanvas.toDataURL("image/png"));
-      var overlayImage = window.maskCtx.getImageData(0, 0, window.maskCanvas.width, window.maskCanvas.height);
-       if (overlayImage) {
-        const imageBitmap = await createImageBitmap(overlayImage);
-
-
-        this.gl.bindTexture(this.gl.TEXTURE_2D, this.selfieTexture);
-        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+ 
 
 
 
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, imageBitmap);
-
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
 
 
     this.gl.enableVertexAttribArray(this.positionAttributeLocation);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
     this.gl.vertexAttribPointer(this.positionAttributeLocation, 2, this.gl.FLOAT, false, 0, 0);
 
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
-       }
-      }
+
+
+
+      this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+
+
+      // get base64 image
+    //console.log(this.canvas.toDataURL());
       
+
   }
 }
 

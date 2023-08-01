@@ -1,23 +1,5 @@
 import { ShaderRenderer } from './shader-renderer.js';
 
-
-
-
-
-const legendColors = [
-  [255, 197, 0, 255], // Vivid Yellow
-  [128, 62, 117, 255], // Strong Purple
-  [255, 104, 0, 255], // Vivid Orange
-  [166, 189, 215, 255] // Very Light Blue
-];
-
-
-
-var mask = null;
-
-
-
-
 import {
   FilesetResolver,
   ImageSegmenter
@@ -36,14 +18,14 @@ async function createImageSegmenter() {
       modelAssetPath:
         "https://storage.googleapis.com/mediapipe-assets/deeplabv3.tflite?generation=1661875711618421",
     },
-    outputCategoryMask: true,
-    outputConfidenceMasks: false,
+    outputCategoryMask: true,//true,
+    outputConfidenceMasks: true,//false,
     runningMode: runningMode
   });
 
 
 }
-createImageSegmenter();
+//createImageSegmenter();
 
 
 
@@ -97,19 +79,16 @@ class FilterStream {
     maskCtx.drawImage(this.video, 0, 0);
 
     imageSegmenter.segment(maskCanvas, function (segmentation) {
-      //console.log(segmentation);
+      console.log(segmentation);
 
       let imageData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height).data;
       const mask = segmentation.categoryMask.getAsUint8Array();
-      //console.log(mask);
+
+      //const mask = segmentation.confidenceMask.getAsUint8Array();
+     //console.log(mask);
 
       for (let i in mask) {
-        // transparent pixel
-        //imageData[i * 4 + 3] = 0;
 
-        //continue;
-
-        const legendColor = legendColors[mask[i] % legendColors.length];
         if (mask[i] != 0) continue;
         imageData[i * 4] = 0//legendColor[0]//(legendColor[0] + imageData[i * 4]) / 2;
         imageData[i * 4 + 1] = 0//legendColor[1]//(legendColor[1] + imageData[i * 4 + 1]) / 2;
@@ -120,8 +99,6 @@ class FilterStream {
       const dataNew = new ImageData(uint8Array, maskCanvas.width, maskCanvas.height);
       maskCtx.putImageData(dataNew, 0, 0);
 
-      //var maskCanvas.toDataURL("image/png"));
-      //localStorage.setItem("mask", maskCanvas.toDataURL("image/png"));
     });
 
   }
@@ -131,6 +108,31 @@ class FilterStream {
 
 
       this.renderer.render()
+
+      if(window.doSegmentation) {
+        console.log(window.maskCanvas.toDataURL("image/png"));
+        var overlayImage = window.maskCtx.getImageData(0, 0, window.maskCanvas.width, window.maskCanvas.height);
+         if (overlayImage) {
+        //this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+        //window.gl.bindTexture(window.gl.TEXTURE_2D, this.texture);
+  
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          window.gl.activeTexture(window.gl.TEXTURE0);
+          //this.gl.uniform1i(this.u_image0, 0);
+          // add overlayImage to this.selfieTexture
+    //        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, true);
+          window.gl.texSubImage2D(window.gl.TEXTURE_2D, 0, 0, 0, window.gl.RGBA, window.gl.UNSIGNED_BYTE, overlayImage);
+          //this.gl.bindTexture(this.gl.TEXTURE_2D, null);
+          /*
+          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);     
+          */
+         // window.gl.drawArrays(window.gl.TRIANGLES, 0, 6);
+          
+         }
+        }
     
 
 
